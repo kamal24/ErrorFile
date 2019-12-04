@@ -94,7 +94,7 @@ public class FileController {
         } catch (IOException e) {
             e.printStackTrace();
         }
-        
+
         inputList.stream().forEach(idx-> {
             System.out.println(idx.getEmail()+" "+idx.getName()+" "+idx.getRoles()+" "+idx.getErrors());
         });
