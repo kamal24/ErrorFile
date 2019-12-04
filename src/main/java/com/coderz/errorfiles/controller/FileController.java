@@ -5,6 +5,8 @@ import com.coderz.errorfiles.Model.FileModel;
 import com.coderz.errorfiles.Model.FileStorageProperties;
 import com.coderz.errorfiles.Service.BeanToCSVService;
 import com.coderz.errorfiles.Service.FileStorageService;
+import com.coderz.errorfiles.Service.RoleService;
+import com.coderz.errorfiles.Service.UserService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,11 +17,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
-
 import javax.servlet.http.HttpServletRequest;
 import java.io.*;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.function.Function;
 import java.util.regex.Pattern;
@@ -40,9 +40,17 @@ public class FileController {
     @Autowired
     BeanToCSVService beanToCSVService;
 
+    @Autowired
+    UserService userService;
+
+    @Autowired
+    RoleService roleService;
+
     private FetchModel fetchModel;
 
-    private List<String> validRoles = new ArrayList<>(Arrays.asList("SA","ADMIN","USER"));
+    private List<String> validRoles;
+    private List<String> existedEmail;
+
 
     private static boolean isValid(String email)
     {
@@ -58,7 +66,13 @@ public class FileController {
     }
 
     private List<FileModel> processInputFile(String inputFilePath) {
+        validRoles = roleService.allRole();
+        existedEmail = userService.allExistedEmail();
+
         List<FileModel> inputList = new ArrayList<FileModel>();
+
+        List<FileModel> errorList = new ArrayList<FileModel>();
+        List<FileModel> correctList = new ArrayList<FileModel>();
 
         fetchModel = new FetchModel(0,0,null);
 
@@ -67,19 +81,25 @@ public class FileController {
             InputStream inputFS = new FileInputStream(inputF);
             BufferedReader br = new BufferedReader(new InputStreamReader(inputFS));
             // skip the header of the csv
-            inputList = br.lines().skip(1).map(mapToItem).filter(item -> item.getErrors() != null).collect(Collectors.toList());
+
+            inputList = br.lines().skip(1).map(mapToItem).collect(Collectors.toList());
+            errorList = inputList.stream().filter(item -> item.getErrors() != null).collect(Collectors.toList());
+            correctList = inputList.stream().filter(item -> item.getErrors() == null).collect(Collectors.toList());
+
+            userService.save(correctList);
+
             br.close();
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         } catch (IOException e) {
             e.printStackTrace();
         }
-
+        
         inputList.stream().forEach(idx-> {
             System.out.println(idx.getEmail()+" "+idx.getName()+" "+idx.getRoles()+" "+idx.getErrors());
         });
 
-        return inputList;
+        return errorList;
     }
 
     private Function<String, FileModel> mapToItem = (line) -> {
@@ -92,6 +112,10 @@ public class FileController {
                 item.setEmail(p[0]);//<-- this is the first column in the csv file
                 if(!isValid(p[0]))
                     err= "Invalid Email";
+                else{
+                    if(existedEmail.contains(p[0].toUpperCase()))
+                        err = "Email already existed";
+                }
             }
 
             if (p[1] != null && p[1].trim().length() > 0)
@@ -100,9 +124,9 @@ public class FileController {
             if (p[2] != null && p[2].trim().length() > 0) {
                 item.setRoles(p[2]);//<-- this is the third column in the csv file
                 String[] roles = p[2].split("#");
-
+                System.out.println(validRoles);
                 for (String role : roles) {
-                    if (!validRoles.contains(role))
+                    if (!validRoles.contains(role.toUpperCase()))
                         if (err.length() > 0)
                             err += "#" + "Invalid Role " + role;
                         else

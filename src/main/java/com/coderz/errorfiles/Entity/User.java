@@ -28,7 +28,7 @@ public class User {
     @JoinTable(name = "user_role",
             joinColumns = { @JoinColumn(name = "userid") },
             inverseJoinColumns = { @JoinColumn(name = "roleid") })
-    private Set<Role> tags = new HashSet<>();
+    private Set<Role> roles = new HashSet<>();
 
     public User() {
 
@@ -63,11 +63,11 @@ public class User {
         this.name = name;
     }
 
-    public Set<Role> getTags() {
-        return tags;
+    public Set<Role> getRoles() {
+        return roles;
     }
 
-    public void setTags(Set<Role> tags) {
-        this.tags = tags;
+    public void setRoles(Set<Role> roles) {
+        this.roles = roles;
     }
 }

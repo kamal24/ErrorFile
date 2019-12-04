@@ -30,3 +30,7 @@ create table user_role(
 
 show tables;
 
+select * from user;
+select * from role;
+select * from user_role;
+

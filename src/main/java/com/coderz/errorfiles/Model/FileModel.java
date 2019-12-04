@@ -1,5 +1,7 @@
 package com.coderz.errorfiles.Model;
 
+import java.util.Set;
+
 public class FileModel {
     private String email;
     private String name;

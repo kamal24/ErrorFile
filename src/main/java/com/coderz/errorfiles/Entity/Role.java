@@ -21,8 +21,8 @@ public class Role {
                     CascadeType.PERSIST,
                     CascadeType.MERGE
             },
-            mappedBy = "tags")
-    private Set<User> posts = new HashSet<>();
+            mappedBy = "roles")
+    private Set<User> users = new HashSet<>();
 
     public Role() {
 
@@ -48,11 +48,11 @@ public class Role {
         this.name = name;
     }
 
-    public Set<User> getPosts() {
-        return posts;
+    public Set<User> getUsers() {
+        return users;
     }
 
-    public void setPosts(Set<User> posts) {
-        this.posts = posts;
+    public void setUsers(Set<User> users) {
+        this.users = users;
     }
 }
