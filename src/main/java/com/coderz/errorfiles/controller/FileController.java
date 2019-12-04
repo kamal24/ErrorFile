@@ -102,10 +102,10 @@ public class FileController {
                 String[] roles = p[2].split("#");
 
                 for (String role : roles) {
-                    if (err.length() > 0)
-                        if (!validRoles.contains(role))
+                    if (!validRoles.contains(role))
+                        if (err.length() > 0)
                             err += "#" + "Invalid Role " + role;
-                        else if (!validRoles.contains(p[2]))
+                        else
                             err += "Invalid Role " + role;
                 };
             }
@@ -127,7 +127,7 @@ public class FileController {
         List<FileModel> errorList = processInputFile(fileStorageProperties.getUploadDir()+"/"+fileName);
 
         if(errorList.size()>0) {
-            fileName = beanToCSVService.writeToFile(errorList);
+            fileName = beanToCSVService.writeToFile(fileName,errorList);
             String fileDownloadUri = ServletUriComponentsBuilder.fromCurrentContextPath()
                     .path("/download/")
                     .path(fileName)

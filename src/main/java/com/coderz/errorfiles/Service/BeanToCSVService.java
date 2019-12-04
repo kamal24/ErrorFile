@@ -5,6 +5,7 @@ import java.util.*;
 
 import com.coderz.errorfiles.Model.FileModel;
 import com.coderz.errorfiles.Model.FileStorageProperties;
+import com.google.common.io.Files;
 import com.opencsv.bean.ColumnPositionMappingStrategy;
 import com.opencsv.bean.StatefulBeanToCsv;
 import com.opencsv.bean.StatefulBeanToCsvBuilder;
@@ -16,11 +17,12 @@ public class BeanToCSVService {
     @Autowired
     FileStorageProperties fileStorageProperties;
 
-    public String writeToFile(List<FileModel> items)
+    public String writeToFile(String inputFile,List<FileModel> items)
     {
 
         // name of generated csv
-        String fileName = "errors.csv";
+
+        String fileName = Files.getNameWithoutExtension(inputFile)+"_errors."+Files.getFileExtension(inputFile);
         final String CSV_LOCATION = fileStorageProperties.getUploadDir()+"/"+fileName;
 
         try {
