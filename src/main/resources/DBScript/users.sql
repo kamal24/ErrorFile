@@ -15,6 +15,10 @@ create table role(
    PRIMARY KEY (roleid)
 );
 
+insert into role values(1,"SA");
+insert into role values(2,"Admin");
+insert into role values(3,"User");
+
 create table user_role(
     userid INT unsigned not null,
     roleid INT unsigned not null,
