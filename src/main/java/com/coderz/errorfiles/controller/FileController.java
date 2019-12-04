@@ -19,6 +19,7 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import javax.servlet.http.HttpServletRequest;
 import java.io.*;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.function.Function;
 import java.util.regex.Pattern;
@@ -40,6 +41,8 @@ public class FileController {
     BeanToCSVService beanToCSVService;
 
     private FetchModel fetchModel;
+
+    private List<String> validRoles = new ArrayList<>(Arrays.asList("SA","ADMIN","USER"));
 
     private static boolean isValid(String email)
     {
@@ -99,7 +102,11 @@ public class FileController {
                 String[] roles = p[2].split("#");
                 if(roles.length!=3)
                     if(err.length()>0)
-                        err+= "#"+"Invalid Role "+ p[2];
+                        if(!validRoles.contains(p[2]))
+                            err+= "#"+"Invalid Role "+ p[2];
+                    else
+                        if(!validRoles.contains(p[2]))
+                            err+= "Invalid Role "+ p[2];
             }
         }
 
