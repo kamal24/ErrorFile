@@ -100,13 +100,14 @@ public class FileController {
             if (p[2] != null && p[2].trim().length() > 0) {
                 item.setRoles(p[2]);//<-- this is the third column in the csv file
                 String[] roles = p[2].split("#");
-                if(roles.length!=3)
-                    if(err.length()>0)
-                        if(!validRoles.contains(p[2]))
-                            err+= "#"+"Invalid Role "+ p[2];
-                    else
-                        if(!validRoles.contains(p[2]))
-                            err+= "Invalid Role "+ p[2];
+
+                for (String role : roles) {
+                    if (err.length() > 0)
+                        if (!validRoles.contains(role))
+                            err += "#" + "Invalid Role " + role;
+                        else if (!validRoles.contains(p[2]))
+                            err += "Invalid Role " + role;
+                };
             }
         }
 
