@@ -72,7 +72,7 @@ public class FileController {
         List<FileModel> inputList = new ArrayList<FileModel>();
 
         List<FileModel> errorList = new ArrayList<FileModel>();
-        List<FileModel> correctList = new ArrayList<FileModel>();
+        List<FileModel> correctList = new ArrayList<>();
 
         fetchModel = new FetchModel(0,0,null);
 
@@ -86,6 +86,10 @@ public class FileController {
             errorList = inputList.stream().filter(item -> item.getErrors() != null).collect(Collectors.toList());
             correctList = inputList.stream().filter(item -> item.getErrors() == null).collect(Collectors.toList());
 
+            correctList.stream().forEach(idx-> {
+                System.out.println(idx.getEmail()+" "+idx.getName()+" "+idx.getRoles()+" "+idx.getErrors());
+            });
+
             userService.save(correctList);
 
             br.close();
@@ -95,46 +99,59 @@ public class FileController {
             e.printStackTrace();
         }
 
-        inputList.stream().forEach(idx-> {
-            System.out.println(idx.getEmail()+" "+idx.getName()+" "+idx.getRoles()+" "+idx.getErrors());
-        });
+
 
         return errorList;
     }
 
     private Function<String, FileModel> mapToItem = (line) -> {
-        String[] p = line.split(",");// a CSV has comma separated lines
+        String[] p = line.split(",",-1);// a CSV has comma separated lines
         FileModel item = new FileModel();
         String err = "";
+        System.out.println(p.length);
         if(p.length>=3) {
-            //System.out.println(p[0]);
+            System.out.println(p[0]);
             if (p[0] != null && p[0].trim().length() > 0) {
                 item.setEmail(p[0]);//<-- this is the first column in the csv file
                 if(!isValid(p[0]))
-                    err= "Invalid Email";
+                    err += "Invalid Email";
                 else{
                     if(existedEmail.contains(p[0].toUpperCase()))
-                        err = "Email already existed";
+                        err += "Email already existed";
                 }
             }
+            else
+                err += "Email should not be null or empty";
 
             if (p[1] != null && p[1].trim().length() > 0)
                 item.setName(p[1]);//<-- this is the second column in the csv file
+            else
+                if (err.length() > 0)
+                    err += "#Name should not be null or empty";
+                else
+                    err += "Name should not be null or empty";
 
-            if (p[2] != null && p[2].trim().length() > 0) {
-                item.setRoles(p[2]);//<-- this is the third column in the csv file
-                String[] roles = p[2].split("#");
-                System.out.println(validRoles);
-                for (String role : roles) {
-                    if (!validRoles.contains(role.toUpperCase()))
-                        if (err.length() > 0)
-                            err += "#" + "Invalid Role " + role;
-                        else
-                            err += "Invalid Role " + role;
-                };
-            }
+                if (p[2] != null && p[2].trim().length() > 0) {
+                    item.setRoles(p[2]);//<-- this is the third column in the csv file
+                    String[] roles = p[2].split("#");
+                    System.out.println(validRoles);
+                    for (String role : roles) {
+                        if (!validRoles.contains(role.toUpperCase()))
+                            if (err.length() > 0)
+                                err += "#" + "Invalid Role " + role;
+                            else
+                                err += "Invalid Role " + role;
+                    }
+                } else
+                    if (err.length() > 0)
+                        err += "#Roles should not be null or empty";
+                    else
+                        err += "Roles should not be null or empty";
+
+
         }
 
+        System.out.println(err);
         if(err.length() > 0) {
             item.setErrors(err);
             fetchModel.setNo_of_rows_failed(fetchModel.getNo_of_rows_failed()+1);
