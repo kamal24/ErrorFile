@@ -21,7 +21,7 @@ public class UserServiceImpl implements UserService {
     UserRepo userRepo;
 
     @Override
-    public void save(List<FileModel> correctList) {
+    public Boolean save(List<FileModel> correctList) {
             correctList.stream().forEach(idx->{
             User user = new User(idx.getEmail(),idx.getName());
 
@@ -34,6 +34,7 @@ public class UserServiceImpl implements UserService {
 
             userRepo.save(user);
         });
+        return true;
     }
 
     @Override

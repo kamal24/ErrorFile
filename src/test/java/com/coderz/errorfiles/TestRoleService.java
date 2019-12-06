@@ -2,7 +2,6 @@ package com.coderz.errorfiles;
 
 import com.coderz.errorfiles.DAO.RoleRepo;
 import com.coderz.errorfiles.Entity.Role;
-import com.coderz.errorfiles.Service.RoleService;
 import com.coderz.errorfiles.Service.impl.RoleServiceImpl;
 import org.junit.Before;
 import org.junit.Test;
@@ -27,8 +26,7 @@ public class TestRoleService {
         MockitoAnnotations.initMocks(this);
     }
 
-    @Test
-    public void getAllRoles() {
+    private void roleMock(){
         List<Role> roles = new ArrayList<>();
         Role role1 = new Role(1,"Admin");
         Role role2 = new Role(1,"SU");
@@ -39,6 +37,11 @@ public class TestRoleService {
         roles.add(role3);
 
         when(roleDAO.findAll()).thenReturn(roles);
+    }
+
+    @Test
+    public void getAllRoles() {
+        roleMock();
 
         List<String> actualRoles = roleService.allRole();
 
