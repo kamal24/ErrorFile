@@ -50,9 +50,9 @@ public class ErrorfilesApplicationTests {
 
 	@Test
 	public void shouldSaveUploadedFile() throws Exception {
-		MockMultipartFile multipartFile = new MockMultipartFile("file", "test.txt",
+		MockMultipartFile multipartFile = new MockMultipartFile("file", "test.csv",
 				"text/plain", "Email,Name,Roles\nabc4@test.com,Test-Users1,SA#Admin#User".getBytes());
-		this.mvc.perform(fileUpload("/").file(multipartFile))
+		this.mvc.perform(fileUpload("/download").file(multipartFile))
 				.andExpect(status().isFound())
 				.andExpect(header().string("Location", "/"));
 
@@ -65,7 +65,7 @@ public class ErrorfilesApplicationTests {
 		given(this.storageService.loadFileAsResource("test.txt"))
 				.willThrow(MyFileNotFoundException.class);
 
-		this.mvc.perform(get("/files/test.txt")).andExpect(status().isNotFound());
+		this.mvc.perform(get("/files/test.csv")).andExpect(status().isNotFound());
 	}
 
 }

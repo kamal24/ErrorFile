@@ -1,12 +1,7 @@
 package com.coderz.errorfiles.controller;
 
 import com.coderz.errorfiles.Model.FetchModel;
-import com.coderz.errorfiles.Model.FileModel;
-import com.coderz.errorfiles.Model.FileStorageProperties;
-import com.coderz.errorfiles.Service.BeanToCSVService;
-import com.coderz.errorfiles.Service.FileStorageService;
-import com.coderz.errorfiles.Service.RoleService;
-import com.coderz.errorfiles.Service.UserService;
+import com.coderz.errorfiles.Service.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,14 +11,8 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import javax.servlet.http.HttpServletRequest;
 import java.io.*;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.function.Function;
-import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 @RestController
 
@@ -35,149 +24,12 @@ public class FileController {
     private FileStorageService fileStorageService;
 
     @Autowired
-    FileStorageProperties fileStorageProperties;
-
-    @Autowired
-    BeanToCSVService beanToCSVService;
-
-    @Autowired
-    UserService userService;
-
-    @Autowired
-    RoleService roleService;
-
-    private FetchModel fetchModel;
-
-    private List<String> validRoles;
-    private List<String> existedEmail;
-
-
-    private static boolean isValid(String email)
-    {
-        String emailRegex = "^[a-zA-Z0-9_+&*-]+(?:\\."+
-                "[a-zA-Z0-9_+&*-]+)*@" +
-                "(?:[a-zA-Z0-9-]+\\.)+[a-z" +
-                "A-Z]{2,7}$";
-
-        Pattern pat = Pattern.compile(emailRegex);
-        if (email == null)
-            return false;
-        return pat.matcher(email).matches();
-    }
-
-    private List<FileModel> processInputFile(String inputFilePath) {
-        validRoles = roleService.allRole();
-        existedEmail = userService.allExistedEmail();
-
-        List<FileModel> inputList = new ArrayList<FileModel>();
-
-        List<FileModel> errorList = new ArrayList<FileModel>();
-        List<FileModel> correctList = new ArrayList<>();
-
-        fetchModel = new FetchModel(0,0,null);
-
-        try{
-            File inputF = new File(inputFilePath);
-            InputStream inputFS = new FileInputStream(inputF);
-            BufferedReader br = new BufferedReader(new InputStreamReader(inputFS));
-            // skip the header of the csv
-
-            inputList = br.lines().skip(1).map(mapToItem).collect(Collectors.toList());
-            errorList = inputList.stream().filter(item -> item.getErrors() != null).collect(Collectors.toList());
-            correctList = inputList.stream().filter(item -> item.getErrors() == null).collect(Collectors.toList());
-
-            correctList.stream().forEach(idx-> {
-                System.out.println(idx.getEmail()+" "+idx.getName()+" "+idx.getRoles()+" "+idx.getErrors());
-            });
-
-            userService.save(correctList);
-
-            br.close();
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
-
-
-        return errorList;
-    }
-
-    private Function<String, FileModel> mapToItem = (line) -> {
-        String[] p = line.split(",",-1);// a CSV has comma separated lines
-        FileModel item = new FileModel();
-        String err = "";
-        System.out.println(p.length);
-        if(p.length>=3) {
-            System.out.println(p[0]);
-            if (p[0] != null && p[0].trim().length() > 0) {
-                item.setEmail(p[0]);//<-- this is the first column in the csv file
-                if(!isValid(p[0]))
-                    err += "Invalid Email";
-                else{
-                    if(existedEmail.contains(p[0].toUpperCase()))
-                        err += "Email already existed";
-                }
-            }
-            else
-                err += "Email should not be null or empty";
-
-            if (p[1] != null && p[1].trim().length() > 0)
-                item.setName(p[1]);//<-- this is the second column in the csv file
-            else
-                if (err.length() > 0)
-                    err += "#Name should not be null or empty";
-                else
-                    err += "Name should not be null or empty";
-
-                if (p[2] != null && p[2].trim().length() > 0) {
-                    item.setRoles(p[2]);//<-- this is the third column in the csv file
-                    String[] roles = p[2].split("#");
-                    System.out.println(validRoles);
-                    for (String role : roles) {
-                        if (!validRoles.contains(role.toUpperCase()))
-                            if (err.length() > 0)
-                                err += "#" + "Invalid Role " + role;
-                            else
-                                err += "Invalid Role " + role;
-                    }
-                } else
-                    if (err.length() > 0)
-                        err += "#Roles should not be null or empty";
-                    else
-                        err += "Roles should not be null or empty";
-
-
-        }
-
-        System.out.println(err);
-        if(err.length() > 0) {
-            item.setErrors(err);
-            fetchModel.setNo_of_rows_failed(fetchModel.getNo_of_rows_failed()+1);
-        }
-
-        fetchModel.setNo_of_rows_parsed(fetchModel.getNo_of_rows_parsed()+1);
-        //more initialization goes here
-        return item;
-    };
+    FileProcessorService fileProcessorService;
 
     @PostMapping("/register")
     public FetchModel uploadFile(@RequestParam("file") MultipartFile file) {
         String fileName = fileStorageService.storeFile(file);
-        List<FileModel> errorList = processInputFile(fileStorageProperties.getUploadDir()+"/"+fileName);
-
-        if(errorList.size()>0) {
-            fileName = beanToCSVService.writeToFile(fileName,errorList);
-            String fileDownloadUri = ServletUriComponentsBuilder.fromCurrentContextPath()
-                    .path("/download/")
-                    .path(fileName)
-                    .toUriString();
-
-            fetchModel.setError_file_url(fileDownloadUri);
-        }
-
-        return fetchModel;
+        return fileProcessorService.processInputFile(fileName);
     }
 
     @GetMapping("/download/{file}")
